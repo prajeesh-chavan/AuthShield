@@ -1,7 +1,12 @@
 const { verifyToken } = require("../utils/token");
+const Blacklist = require("../models/Blacklist");
 
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
   const token = req.query.token || req.body.token;
+  const isBlacklisted = await Blacklist.findOne({ token });
+  if (isBlacklisted) {
+    return res.status(403).send("Token has been revoked.");
+  }
   const user = verifyToken(token, process.env.JWT_SECRET);
 
   if (!user) {

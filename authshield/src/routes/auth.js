@@ -43,6 +43,19 @@ router.get("/verify", authenticateToken, (req, res) => {
   res.send(`Authenticated as ${req.user.email}`);
 });
 
+// Endpoint to revoke token
+router.post("/revoke-token", authenticateToken, async (req, res) => {
+  const { token } = req.body;
+  try {
+    const decoded = verifyToken(token, process.env.JWT_SECRET);
+    const expiresAt = new Date(decoded.exp * 1000);
+    await Blacklist.create({ token, expiresAt });
+    res.send("Token revoked successfully.");
+  } catch (error) {
+    res.status(400).send("Failed to revoke token.");
+  }
+});
+
 // Initiate OAuth login
 router.get(
   "/google",

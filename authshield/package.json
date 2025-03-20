@@ -1,6 +1,6 @@
 {
   "name": "no-pass-auth",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A secure passwordless magic link authentication SDK for Node.js, React, and React Native.",
   "main": "index.js",
   "scripts": {

@@ -12,12 +12,15 @@ passport.use(
       callbackURL: `${process.env.BACKEND_URL}/auth/google/callback`,
     },
     (accessToken, refreshToken, profile, done) => {
-      // Use profile info (mainly profile.id) to identify the user
-      const token = generateToken(
-        profile.emails[0].value,
-        process.env.JWT_SECRET
-      );
-      done(null, token); // Pass the generated token to the callback
+      try {
+        const token = generateToken(
+          profile.emails[0].value,
+          process.env.JWT_SECRET
+        );
+        done(null, token);
+      } catch (error) {
+        done(error, null);
+      }
     }
   )
 );

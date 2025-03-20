@@ -1,10 +1,11 @@
 const rateLimit = require("express-rate-limit");
 
 // Rate limiting middleware
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per window
-  message: "Too many requests, please try again later.",
-});
+const limiter = (options) =>
+  rateLimit({
+    windowMs: options.windowMs || 15 * 60 * 1000,
+    max: options.max || 5,
+    message: options.message || "Too many requests, please try again later.",
+  });
 
 module.exports = { limiter };
