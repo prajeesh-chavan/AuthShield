@@ -3,7 +3,7 @@ const { generateToken } = require("../utils/token");
 const { sendMagicLink } = require("../utils/mailer");
 const { authenticateToken } = require("../middleware/auth");
 const { limiter } = require("../utils/rateLimit");
-const QRCode = require("qrcode"); // New: Import QR Code package
+const QRCode = require("qrcode");
 const passport = require("passport");
 
 const router = express.Router();
@@ -11,6 +11,11 @@ const router = express.Router();
 // Endpoint to send magic link and generate QR code
 router.post("/send-link", limiter, async (req, res) => {
   const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
   const token = generateToken(email, process.env.JWT_SECRET);
   const magicLink = `${process.env.FRONTEND_URL}/auth/verify?token=${token}`;
 
@@ -20,7 +25,8 @@ router.post("/send-link", limiter, async (req, res) => {
 
     // Send magic link via email along with the QR Code
     await sendMagicLink(email, magicLink, {
-      service: "Gmail",
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -31,29 +37,20 @@ router.post("/send-link", limiter, async (req, res) => {
     res.json({
       message: "Magic link sent!",
       magicLink,
-      qrCodeUrl, // Send QR Code URL in the response
+      qrCodeUrl,
     });
   } catch (error) {
-    res.status(500).send("Error sending magic link");
+    console.error("Error sending magic link:", error.message);
+    res.status(500).json({ message: "Error sending magic link" });
   }
 });
 
 // Endpoint to verify token
 router.get("/verify", authenticateToken, (req, res) => {
-  res.send(`Authenticated as ${req.user.email}`);
-});
-
-// Endpoint to revoke token
-router.post("/revoke-token", authenticateToken, async (req, res) => {
-  const { token } = req.body;
-  try {
-    const decoded = verifyToken(token, process.env.JWT_SECRET);
-    const expiresAt = new Date(decoded.exp * 1000);
-    await Blacklist.create({ token, expiresAt });
-    res.send("Token revoked successfully.");
-  } catch (error) {
-    res.status(400).send("Failed to revoke token.");
+  if (!req.user) {
+    return res.status(403).send("Invalid or expired token.");
   }
+  res.send(`Authenticated as ${req.user.email}`);
 });
 
 // Initiate OAuth login
@@ -75,8 +72,14 @@ router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
-    // Redirect with JWT token after successful OAuth login
-    res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${req.user}`);
+    try {
+      res.redirect(
+        `${process.env.FRONTEND_URL}/auth/success?token=${req.user}`
+      );
+    } catch (error) {
+      console.error("OAuth callback error:", error.message);
+      res.status(500).send("OAuth login failed");
+    }
   }
 );
 

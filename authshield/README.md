@@ -11,7 +11,6 @@
 - **Secure Token Generation**: Tokens are securely generated and verified using JSON Web Tokens (JWT).
 - **Email Integration**: Utilizes `nodemailer` to send magic links via email.
 - **OAuth2 Social Logins**: Supports Google, Facebook, GitHub, and other OAuth providers.
-- **Token Revocation**: Blacklist tokens to prevent reuse after logout or revocation.
 - **Rate Limiting**: Protects against abuse by limiting the number of authentication requests per user or IP address.
 - **Role-Based Access Control (RBAC)**: Manage user roles and permissions to control access to different parts of the application.
 - **Multi-Device Support**: Works seamlessly across different devices.
@@ -193,7 +192,7 @@ export default VerifyMagicLink;
 
 1. **Invalid Token Error**:
 
-   - Ensure the token is not expired or blacklisted.
+   - Ensure the token is not expired.
    - Verify that the `JWT_SECRET` in the `.env` file matches the one used to generate the token.
 
 2. **Email Not Sent**:
